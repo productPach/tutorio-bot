@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const { Markup } = require("telegraf");
+const subjectLabels = require("../utils/subjectLabels");
 
 module.exports = async (ctx) => {
   const telegramId = ctx.from.id.toString();
@@ -19,7 +20,9 @@ module.exports = async (ctx) => {
     }
   );
 
-  await ctx.editMessageText(`✅ Выбран предмет: *${selectedSubject}*`, {
+  const subjectLabel = subjectLabels[selectedSubject] || selectedSubject;
+
+  await ctx.editMessageText(`✅ Выбран предмет: *${subjectLabel}*`, {
     parse_mode: "Markdown",
   });
 
