@@ -93,7 +93,7 @@ module.exports = async function text(ctx) {
 
   try {
     // Получаем ответ OpenAI
-    const reply = await getChatCompletion(
+    let reply = await getChatCompletion(
       optimizedHistory,
       user.selectedSubject,
       user.selectedMode
