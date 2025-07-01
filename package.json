@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@svgdotjs/svg.js": "^3.2.4",
+    "axios": "^1.10.0",
     "canvas": "^3.1.2",
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
@@ -7,6 +9,7 @@
     "mongoose": "^8.16.1",
     "node-cron": "^4.2.0",
     "openai": "^5.8.2",
+    "svgdom": "^0.1.21",
     "telegraf": "^4.16.3"
   },
   "devDependencies": {

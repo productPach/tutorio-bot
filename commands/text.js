@@ -112,19 +112,57 @@ module.exports = async function text(ctx) {
     await user.save();
 
     const parts = splitTextWithFormulas(reply);
-    for (const part of parts) {
-      if (part.type === "text" && part.content.trim()) {
-        await ctx.reply(part.content);
-      } else if (part.type === "formula") {
-        try {
-          const image = await renderFormula(part.content); // await, если функция асинхронная
+    let currentMessage = "";
+    let currentFormulas = [];
+
+    const sendTextChunk = async () => {
+      if (currentMessage.trim()) {
+        await ctx.reply(currentMessage);
+        currentMessage = "";
+      }
+    };
+
+    const sendFormula = async (formula) => {
+      try {
+        const image = await renderFormula(formula.content, formula.isDisplay);
+        if (image) {
           await ctx.replyWithPhoto({ source: image });
-        } catch (e) {
-          console.error("Ошибка при рендере формулы:", e);
-          await ctx.reply(`❌ Не удалось отобразить формулу.`);
+        } else {
+          const formulaText = formula.isDisplay
+            ? `$$${formula.content}$$`
+            : `$${formula.content}$`;
+          await ctx.replyWithMarkdownV2(
+            `\`${formulaText.replace(/[_*[\]()~>#+=|{}.!-]/g, "\\$&")}\``
+          );
         }
+      } catch (e) {
+        console.error("Ошибка формулы:", formula.content, e);
+        await ctx.reply(`[Ошибка формулы: ${formula.content}]`);
+      }
+    };
+
+    for (const part of parts) {
+      if (part.type === "text") {
+        // Разбиваем длинный текст на части по переносам строк
+        const lines = part.content.split("\n");
+
+        for (const line of lines) {
+          if (currentMessage.length + line.length > 3000) {
+            await sendTextChunk();
+          }
+          currentMessage += line + "\n";
+        }
+      } else if (part.type === "formula") {
+        // Отправляем накопленный текст перед формулой
+        await sendTextChunk();
+
+        // Отправляем формулу
+        await sendFormula(part);
       }
     }
+
+    // Отправляем остаток текста
+    await sendTextChunk();
   } catch (err) {
     console.error("Ошибка в обработчике текста:", err);
 
