@@ -99,6 +99,15 @@ module.exports = async function text(ctx) {
       user.selectedMode
     );
 
+    // Автоматическое преобразование **формул** в TeX
+    reply = reply.replace(/\*\*(.*?)\*\*/g, (_, formula) => {
+      // Проверяем, похоже ли содержимое на математическое выражение
+      if (/[a-zA-Z0-9+\-*/=^_()\[\]{}]/.test(formula)) {
+        return `\\(${formula}\\)`;
+      }
+      return `**${formula}**`; // оставляем как есть, если не похоже на формулу
+    });
+
     user.chatHistory.push({ role: "assistant", content: reply });
 
     // Ограничиваем длину истории
