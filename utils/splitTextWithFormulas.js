@@ -1,23 +1,38 @@
-function splitTextWithFormulas(text) {
-  const regex = /(\$\$[^$]+\$\$|\$[^$]+\$|\\\[.*?\\\])/gs;
+// utils/splitTextWithFormulas.js
+module.exports = function splitTextWithFormulas(input) {
   const parts = [];
-  let lastIndex = 0;
+  // Регулярка для поиска формул в $...$ или $$...$$ или \( ... \)
+  const regex = /(\$\$.*?\$\$|\$.*?\$|\\\(.*?\\\))/gs;
 
-  for (const match of text.matchAll(regex)) {
-    const { index } = match;
-    if (index > lastIndex) {
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(input)) !== null) {
+    // Текст перед формулой
+    if (match.index > lastIndex) {
       parts.push({
         type: "text",
-        content: text.slice(lastIndex, index).trim(),
+        content: input.slice(lastIndex, match.index),
       });
     }
-    parts.push({ type: "formula", content: match[0].trim() });
-    lastIndex = index + match[0].length;
+    // Формула без обрамления
+    let formula = match[0];
+    if (formula.startsWith("$$") && formula.endsWith("$$")) {
+      formula = formula.slice(2, -2);
+    } else if (formula.startsWith("$") && formula.endsWith("$")) {
+      formula = formula.slice(1, -1);
+    } else if (formula.startsWith("\\(") && formula.endsWith("\\)")) {
+      formula = formula.slice(2, -2);
+    }
+    parts.push({ type: "formula", content: formula.trim() });
+
+    lastIndex = regex.lastIndex;
   }
 
-  if (lastIndex < text.length) {
-    parts.push({ type: "text", content: text.slice(lastIndex).trim() });
+  // Остаток текста после последней формулы
+  if (lastIndex < input.length) {
+    parts.push({ type: "text", content: input.slice(lastIndex) });
   }
 
-  return parts.filter((p) => p.content.length > 0);
-}
+  return parts;
+};

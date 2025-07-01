@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const { getChatCompletion } = require("../services/openaiService");
-const renderFormula = require("../utils/renderFormula");
 const splitTextWithFormulas = require("../utils/splitTextWithFormulas");
+const renderFormula = require("../utils/renderFormula");
 
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_FREE_MESSAGES_PER_DAY = 3;
@@ -113,11 +113,16 @@ module.exports = async function text(ctx) {
 
     const parts = splitTextWithFormulas(reply);
     for (const part of parts) {
-      if (part.type === "text") {
+      if (part.type === "text" && part.content.trim()) {
         await ctx.reply(part.content);
       } else if (part.type === "formula") {
-        const image = renderFormula(part.content);
-        await ctx.replyWithPhoto(image);
+        try {
+          const image = await renderFormula(part.content); // await, если функция асинхронная
+          await ctx.replyWithPhoto({ source: image });
+        } catch (e) {
+          console.error("Ошибка при рендере формулы:", e);
+          await ctx.reply(`❌ Не удалось отобразить формулу.`);
+        }
       }
     }
   } catch (err) {
